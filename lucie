@@ -4,72 +4,34 @@
 <meta charset="UTF-8">
 <title>Mini Block Blast</title>
 <style>
-    body {
-        background: #222;
-        color: white;
-        text-align: center;
-        font-family: Arial;
-    }
+body {
+    background: #1e1e1e;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+}
 
-    #board {
-        display: grid;
-        grid-template-columns: repeat(8, 50px);
-        grid-template-rows: repeat(8, 50px);
-        gap: 4px;
-        margin: 20px auto;
-        width: fit-content;
-    }
+#board {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    gap: 4px;
+    margin: 20px auto;
+    width: fit-content;
+}
 
-    .cell {
-        width: 50px;
-        height: 50px;
-        background: #444;
-        cursor: pointer;
-    }
+.cell {
+    width: 50px;
+    height: 50px;
+    background: #333;
+    cursor: pointer;
+}
 
-    .filled {
-        background: limegreen;
-    }
+.filled {
+    background: #00c853;
+}
 
-    #blocks {
-        margin-top: 20px;
-    }
-
-    .block {
-        display: inline-block;
-        width: 50px;
-        height: 50px;
-        background: orange;
-        margin: 10px;
-        cursor: pointer;
-    }
-</style>
-</head>
-<body>
-
-<h1>Mini Block Blast</h1>
-
-<div id="board"></div>
-
-<div id="blocks">
-    <div class="block" onclick="selectBlock(1)"></div>
-    <div class="block" onclick="selectBlock(2)" style="width:104px;"></div>
-</div>
-
-<script>
-    const board = document.getElementById("board");
-    let selectedBlockSize = 1;
-
-    // Spielfeld erstellen
-    for (let i = 0; i < 64; i++) {
-        const cell = document.createElement("div");
-        cell.classList.add("cell");
-        cell.addEventListener("click", () => placeBlock(cell));
-        board.appendChild(cell);
-    }
-
-    function selectBlock(size) {
-        selectedBlockSize = size;
-    }
-
-    function placeBlock(cel
+.block {
+    display: inline-block;
+    height: 50px;
+    background: orange;
