@@ -1,37 +1,329 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Mini Block Blast</title>
-<style>
-body {
-    background: #1e1e1e;
-    color: white;
-    text-align: center;
-    font-family: Arial;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point Collector Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .game-container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 500px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .stat {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            min-width: 100px;
+        }
+        
+        .stat-value {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        #gameBoard {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: linear-gradient(to bottom, #e8f4f8, #d4e8f0);
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: move;
+            z-index: 10;
+        }
+        
+        .point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 20;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .game-over h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .game-over p {
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 Point Collector</h1>
+        
+        <div class="stats">
+            <div class="stat">
+                Points: <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat">
+                Time: <div class="stat-value" id="timer">30</div>s
+            </div>
+        </div>
+        
+        <div id="gameBoard">
+            <div class="player" id="player">👤</div>
+            <div class="game-over" id="gameOver">
+                <h2>Game Over!</h2>
+                <p>Final Score: <span id="finalScore">0</span></p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn" onclick="startGame()">Start Game</button>
+            <button id="resetBtn" onclick="resetGame()">Reset</button>
+        </div>
+    </div>
 
-#board {
-    display: grid;
-    grid-template-columns: repeat(8, 50px);
-    grid-template-rows: repeat(8, 50px);
-    gap: 4px;
-    margin: 20px auto;
-    width: fit-content;
-}
-
-.cell {
-    width: 50px;
-    height: 50px;
-    background: #333;
-    cursor: pointer;
-}
-
-.filled {
-    background: #00c853;
-}
-
-.block {
-    display: inline-block;
-    height: 50px;
-    background: orange;
+    <script>
+        const gameBoard = document.getElementById('gameBoard');
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        let score = 0;
+        let time = 30;
+        let gameActive = false;
+        let playerX = gameBoard.clientWidth / 2 - 20;
+        let playerY = gameBoard.clientHeight - 50;
+        
+        const POINT_SIZE = 20;
+        const PLAYER_SPEED = 15;
+        
+        // Mouse movement
+        document.addEventListener('mousemove', (e) => {
+            if (!gameActive) return;
+            
+            const boardRect = gameBoard.getBoundingClientRect();
+            const relX = e.clientX - boardRect.left;
+            
+            if (relX > 0 && relX < boardRect.width) {
+                playerX = Math.max(0, Math.min(relX - 20, boardRect.width - 40));
+                player.style.left = playerX + 'px';
+            }
+        });
+        
+        // Keyboard arrow keys alternative
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (!gameActive) return;
+            
+            if (e.key === 'ArrowLeft') playerX = Math.max(0, playerX - PLAYER_SPEED);
+            if (e.key === 'ArrowRight') playerX = Math.min(gameBoard.clientWidth - 40, playerX + PLAYER_SPEED);
+            
+            player.style.left = playerX + 'px';
+        });
+        
+        function createPoint() {
+            if (!gameActive) return;
+            
+            const point = document.createElement('div');
+            point.className = 'point';
+            point.textContent = '+1';
+            
+            const x = Math.random() * (gameBoard.clientWidth - POINT_SIZE);
+            const y = Math.random() * (gameBoard.clientHeight - POINT_SIZE - 60);
+            
+            point.style.left = x + 'px';
+            point.style.top = y + 'px';
+            
+            point.dataset.x = x;
+            point.dataset.y = y;
+            
+            gameBoard.appendChild(point);
+            
+            return { element: point, x, y };
+        }
+        
+        function checkCollision(pointX, pointY) {
+            return pointX < playerX + 40 &&
+                   pointX + POINT_SIZE > playerX &&
+                   pointY < playerY + 40 &&
+                   pointY + POINT_SIZE > playerY;
+        }
+        
+        function gameLoop() {
+            if (!gameActive) return;
+            
+            const points = document.querySelectorAll('.point');
+            points.forEach(point => {
+                const pointX = parseFloat(point.dataset.x);
+                const pointY = parseFloat(point.dataset.y);
+                
+                if (checkCollision(pointX, pointY)) {
+                    score++;
+                    scoreDisplay.textContent = score;
+                    point.remove();
+                }
+            });
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function startGame() {
+            if (gameActive) return;
+            
+            gameActive = true;
+            score = 0;
+            time = 30;
+            scoreDisplay.textContent = '0';
+            gameOverScreen.style.display = 'none';
+            startBtn.disabled = true;
+            
+            // Spawn points every 300ms
+            const pointInterval = setInterval(() => {
+                if (gameActive) {
+                    createPoint();
+                } else {
+                    clearInterval(pointInterval);
+                }
+            }, 300);
+            
+            // Timer
+            const timerInterval = setInterval(() => {
+                time--;
+                timerDisplay.textContent = time;
+                
+                if (time <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+            
+            gameLoop();
+        }
+        
+        function endGame() {
+            gameActive = false;
+            startBtn.disabled = false;
+            gameOverScreen.style.display = 'block';
+            finalScoreDisplay.textContent = score;
+            
+            // Remove all points
+            document.querySelectorAll('.point').forEach(p => p.remove());
+        }
+        
+        function resetGame() {
+            gameActive = false;
+            score = 0;
+            time = 30;
+            scoreDisplay.textContent = '0';
+            timerDisplay.textContent = '30';
+            gameOverScreen.style.display = 'none';
+            startBtn.disabled = false;
+            
+            // Remove all points
+            document.querySelectorAll('.point').forEach(p => p.remove());
+        }
+    </script>
+</body>
+</html>
